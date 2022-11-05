@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'minitest/autorun'
+require "test_helper"
 
 module MailTools
   class MailToolsTest < Minitest::Test
@@ -26,8 +26,12 @@ module MailTools
       end
     end
 
-    test 'foo' do
-      assert_equal MailTools.foo, 'foo'
+    test "foo" do
+      assert_equal MailTools.foo, "foo"
+    end
+
+    test "has version number" do
+      refute_nil ::MailTools::VERSION
     end
   end
 end

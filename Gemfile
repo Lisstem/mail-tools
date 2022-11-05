@@ -2,5 +2,5 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's runtime dependencies in mails_tools.gemspec
+# Specify your gem's dependencies in mail_tools.gemspec
 gemspec

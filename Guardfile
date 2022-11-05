@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # A sample Guardfile
 # More info at https://github.com/guard/guard#readme
 
@@ -21,5 +23,5 @@ guard :minitest do
   watch(%r{^lib/cardmarket_cli/(.*/)?([^/]+)\.rb$}) do |m|
     %W[test/unit/#{m[1]}#{m[2]}_test.rb]
   end
-  watch(%r{^test/test_helper\.rb$}) { 'test' }
+  watch(%r{^test/test_helper\.rb$}) { "test" }
 end
