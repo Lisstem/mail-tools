@@ -13,7 +13,7 @@ module MailTools
     #   end
     # from ruby on rails, file: activesupport/lib/active_support/testing/declarative.rb, line 13
     def self.test(name, &block)
-      test_name = "test_#{name.gsub(/\s+/, '_')}".to_sym
+      test_name = "test_#{name.gsub(/\s+/, "_")}".to_sym
       defined = method_defined? test_name
       raise "#{test_name} is already defined in #{self}" if defined
 
@@ -24,10 +24,6 @@ module MailTools
           flunk "No implementation provided for #{name}"
         end
       end
-    end
-
-    test "foo" do
-      assert_equal MailTools.foo, "foo"
     end
 
     test "has version number" do

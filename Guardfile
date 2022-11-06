@@ -20,7 +20,7 @@
 guard :minitest do
   # with Minitest::Unit
   watch(%r{^test/(.*)/?(.*)_test\.rb$})
-  watch(%r{^lib/cardmarket_cli/(.*/)?([^/]+)\.rb$}) do |m|
+  watch(%r{^lib/mail_tools/(.*/)?([^/]+)\.rb$}) do |m|
     %W[test/unit/#{m[1]}#{m[2]}_test.rb]
   end
   watch(%r{^test/test_helper\.rb$}) { "test" }
