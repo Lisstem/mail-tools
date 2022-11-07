@@ -18,7 +18,7 @@ module MailTools
     end
 
     def missing?(*required_array, **required_hash)
-      missing(*required_array, **required_hash).blank?
+      !missing(*required_array, **required_hash).blank?
     end
 
     def missing(*required_array, **required_hash)
@@ -45,8 +45,8 @@ module MailTools
       @store.to_s
     end
 
-    def prompt_for_missing(required)
-      missing_paths(*required).each do |p|
+    def prompt_for_missing(missing)
+      missing_paths(*missing).each do |p|
         print "#{p.join(" ")}: "
         deep_insert(@store, gets.strip, *p)
       end

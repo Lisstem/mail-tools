@@ -96,5 +96,28 @@ module MailTools
       assert missing.include?("foobar")
       assert missing.include?(object_apply(test, :to_s, values: true))
     end
+
+    test "missing return empty array if nothing is missing" do
+      config = Config.new(default: @default)
+      missing = config.missing(:foo, bar: :foo)
+      assert_equal [], missing
+    end
+
+    test "missing? returns true if options are missing" do
+      config = Config.new(default: @default)
+      assert config.missing?(:test)
+      assert config.missing?(test: :test)
+    end
+
+    test "missing? returns false if no options are missing" do
+      config = Config.new(default: @default)
+      refute config.missing?(:foo, bar: :foo)
+    end
+
+    test "missing paths returns missing paths" do
+      config = Config.new(default: @default)
+      expected = ["test_bar", ["test_foo", "bar"], ["test_foo", "foo"]]
+      assert_equal expected, config.missing_paths(:test_bar, test_foo: [:bar, :foo])
+    end
   end
 end
