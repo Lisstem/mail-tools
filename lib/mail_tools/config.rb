@@ -19,6 +19,12 @@ module MailTools
         Util::Config.create(name, prompt: opts[:prompt], required:, env:, default:, files:)
       end
 
+      @config = nil
+
+      def config
+        @config ||= init
+      end
+
       private
 
       def command_line_options
@@ -35,6 +41,4 @@ module MailTools
       end
     end
   end
-
-  CONFIG = Config.init
 end
