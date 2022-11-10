@@ -23,22 +23,22 @@ module MailTools
         password = "{BLF-CRYPT}#{BCrypt::Password.create(password)}"
         query = "INSERT INTO users(name, password, address_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;"
         db.transaction do |conn|
-          address = create ? get_or_create_address(address, conn) : get_address(address, conn)
-          raise Error unless address
+          address = create ? get_or_create_addresses([address], conn) : get_addresses([address], conn)
+          raise Error if address.blank?
 
-          result = conn.exec_params(query, [name, password, address["id"]])
+          result = conn.exec_params(query, [name, password, address[0]["id"]])
           result.check
         end
       end
 
       def alias(source, destination, create: true)
+        addresses = [source, destination]
         db.transaction do |conn|
-          source = create ? get_or_create_address(source, conn) : get_address(source, conn)
-          destination = create ? get_or_create_address(destination, conn) : get_address(destination, conn)
-          raise Error unless source && destination
+          addresses = create ? get_or_create_addresses(addresses, conn) : get_addresses(addresses, conn)
+          raise Error unless addresses.count == 2
 
           result = conn.exec_params("INSERT INTO aliases(source_id, destination_id) "\
-                                    "VALUES ($1, $2) ON CONFLICT DO NOTHING", [source["id"], destination["id"]])
+                                    "VALUES ($1, $2) ON CONFLICT DO NOTHING", addresses.map { |add| add["id"] })
           result.check
         end
       end
@@ -65,24 +65,29 @@ module MailTools
         password
       end
 
-      def get_or_create_address(address, db = nil)
+      def get_or_create_addresses(addresses, db = nil)
         db ||= self.db
-        address_db = get_address(address, db)
-        unless address_db
-          create_addresses([address], db)
-          address_db = get_address(address, db)
-          puts "Created address #{address.inspect}."
+        addresses_db = get_addresses(addresses, db)
+        addresses = addresses.reject do |address|
+          addresses_db&.any? { |add| "#{add["name"]}@#{add["domain_name"]}" == address }
         end
-        address_db
+        return addresses_db if addresses.blank?
+
+        create_addresses(addresses, db)
+        puts "Created addresses #{addresses.join(", ")}."
+        get_addresses(addresses, db).concat(addresses_db || [])
       end
 
-      def get_address(address, db = nil)
+      def get_addresses(addresses, db = nil)
         db ||= self.db
-        result = db.exec_params("SELECT addresses.* FROM addresses INNER JOIN domains ON domains.id = domain_id "\
-                                "WHERE addresses.name = $1 AND domains.name = $2", address.split("@"))
+        values = (1..addresses.length).map { |i| "(addresses.name = $#{2 * i - 1} AND domains.name = $#{2 * i})" }
+                                      .join(" OR ")
+        result = db.exec_params("SELECT addresses.*, domains.name AS domain_name FROM "\
+                                "addresses INNER JOIN domains ON domains.id = domain_id WHERE #{values}",
+                                addresses.flat_map { |add| add.split("@") })
         result.check
 
-        result.num_tuples.positive? ? result[0] : nil
+        result.num_tuples.positive? ? result.each.to_a : nil
       end
     end
   end
