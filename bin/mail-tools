@@ -9,6 +9,7 @@ begin
   db = MailTools::DB
   puts(MailTools::Config.config.reject { | k, _ | k == "password" })
   MailTools::DB.init_with_config
+  MailTools::Command.execute(ARGV)
 
 ensure
   db&.close
