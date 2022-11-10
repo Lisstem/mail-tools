@@ -15,7 +15,11 @@ module MailTools
       def execute(args)
         name = args.shift
         sub_command = args.shift || :default
-        commands[name.to_sym].public_send(sub_command.to_sym, *args)
+        if commands[name.to_sym].respond_to? sub_command
+          commands[name.to_sym].public_send(sub_command, *args)
+        else
+          commands[name.to_sym].public_send(:default, sub_command, *args)
+        end
       end
 
       private

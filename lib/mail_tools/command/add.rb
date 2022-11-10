@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-require "bcrypt"
-require "io/console"
-
 require_relative "base"
+require_relative "input"
 
 module MailTools
   module Command
@@ -19,8 +17,7 @@ module MailTools
       end
       
       def user(name, address, password = nil, create: true)
-        password ||= input_password
-        password = "{BLF-CRYPT}#{BCrypt::Password.create(password)}"
+        password = Input.encrypted_password(password)
         query = "INSERT INTO users(name, password, address_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;"
         db.transaction do |conn|
           address = create ? get_or_create_addresses([address], conn) : get_addresses([address], conn)
@@ -56,13 +53,6 @@ module MailTools
         result = db.exec_params(query, addresses)
         result.check
         result
-      end
-      
-      def input_password
-        password = $stdin.getpass("password: ").strip while password.blank?
-        raise Error unless password == $stdin.getpass("password (confirm): ").strip
-
-        password
       end
 
       def get_or_create_addresses(addresses, db = nil)
