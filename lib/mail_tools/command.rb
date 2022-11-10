@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "command/list"
+require_relative "command/setup"
+require_relative "command/teardown"
 
 module MailTools
   module Command
@@ -12,13 +14,15 @@ module MailTools
       def execute(args)
         puts commands.inspect
         name = args.shift
-        commands[name.to_sym].public_send(args.shift.to_sym, *args)
+        sub_command = args.shift || :default
+        commands[name.to_sym].public_send(sub_command.to_sym, *args)
       end
 
       private
 
       def init
-        { list: List.new(MailTools::DB.connection) }
+        db = MailTools::DB.connection
+        { list: List.new(db), setup: Setup.new(db), teardown: Teardown.new(db) }
       end
     end
   end
