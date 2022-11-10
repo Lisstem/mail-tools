@@ -12,7 +12,6 @@ module MailTools
       end
 
       def execute(args)
-        puts commands.inspect
         name = args.shift
         sub_command = args.shift || :default
         commands[name.to_sym].public_send(sub_command.to_sym, *args)
