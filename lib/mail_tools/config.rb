@@ -10,12 +10,12 @@ module MailTools
       def init
         name = "MailTools"
         opts = command_line_options
-        env = opts.slice(:user, :password, :port, :host, :"db-name").compact
+        env = opts.slice(:user, :password, :port, :host, :dbname).compact
                   .transform_keys { |k| "#{name.upcase}_#{k.to_s.upcase}" }
         env = ENV.merge!(env)
         files = (opts[:files] || []).concat(Util::Config.default_files(name))
-        default = { host: "localhost", port: 5432, "db-name": "name" }
-        required = %i[user password db-name]
+        default = { host: "localhost", port: 5432, dbname: "mail" }
+        required = %i[user password dbname]
         Util::Config.create(name, prompt: opts[:prompt], required:, env:, default:, files:)
       end
 
@@ -35,7 +35,7 @@ module MailTools
           opt :password, "Password for primary server", type: :string
           opt :host, "Host for primary server", type: :string
           opt :port, "Port for primary server", type: :string
-          opt :"db-name", "name of primary db", type: :string
+          opt :dbname, "name of primary db", type: :string
           opt :config, "Additional config files", type: :string, multi: true
         end.compact
       end

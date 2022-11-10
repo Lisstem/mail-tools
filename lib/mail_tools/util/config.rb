@@ -65,9 +65,9 @@ module MailTools
         return config unless required
         
         missing = config.missing(*required)
-        return config unless missing
+        return config if missing.blank?
         
-        raise StandardError, "Missing config variables: #{missing.inspect}" unless prompt
+        raise Error, "Missing config variables: #{missing.inspect}" unless prompt
 
         config.prompt_for_missing(required)
       end
@@ -133,7 +133,7 @@ module MailTools
       end
 
       def _merge(target, other)
-        raise StandardError unless other.respond_to? :each_pair
+        raise Error unless other.respond_to? :each_pair
 
         other.each_pair do |k, v|
           v.respond_to?(:each_pair) ? _merge(target[k], v) : target[k] = v

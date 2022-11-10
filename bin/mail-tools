@@ -1,7 +1,17 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "bundler/setup"
-require "mail_tools"
+db = nil
+begin
+  require "bundler/setup"
+  require "mail_tools"
 
-puts MailTools::Config.config
+  db = MailTools::DB
+  puts(MailTools::Config.config.reject { | k, _ | k == "password" })
+  MailTools::DB.init_with_config
+
+ensure
+  db&.close
+end
+
+
