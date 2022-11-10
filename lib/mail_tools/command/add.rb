@@ -18,19 +18,29 @@ module MailTools
         create_addresses(addresses)
       end
       
-      def user(name, address, password = nil)
+      def user(name, address, password = nil, create: true)
         password ||= input_password
         password = "{BLF-CRYPT}#{BCrypt::Password.create(password)}"
         query = "INSERT INTO users(name, password, address_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;"
         db.transaction do |conn|
-          address = get_or_create_address(address, conn)
+          address = create ? get_or_create_address(address, conn) : get_address(address, conn)
+          raise Error unless address
+
           result = conn.exec_params(query, [name, password, address["id"]])
           result.check
         end
       end
 
-      def aliases(source, destionation)
-        
+      def alias(source, destination, create: true)
+        db.transaction do |conn|
+          source = create ? get_or_create_address(source, conn) : get_address(source, conn)
+          destination = create ? get_or_create_address(destination, conn) : get_address(destination, conn)
+          raise Error unless source && destination
+
+          result = conn.exec_params("INSERT INTO aliases(source_id, destination_id) "\
+                                    "VALUES ($1, $2) ON CONFLICT DO NOTHING", [source["id"], destination["id"]])
+          result.check
+        end
       end
 
       private
