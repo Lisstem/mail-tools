@@ -6,18 +6,15 @@ module MailTools
   module Command
     class Teardown < Base
       def default
+        users
         addresses
         domains
       end
-
-      def domains
-        result = db.exec("DROP TABLE IF EXISTS domains;")
-        result.check
-      end
-
-      def addresses
-        result = db.exec("DROP TABLE IF EXISTS addresses;")
-        result.check
+      
+      %i[domains addresses users].each do |sym|
+        define_method sym do
+          result = db.exec("DROP TABLE IF EXISTS #{sym.to_s};")
+        end
       end
     end
   end
