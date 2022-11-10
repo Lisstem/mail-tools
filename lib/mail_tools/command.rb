@@ -3,6 +3,7 @@
 require_relative "command/list"
 require_relative "command/setup"
 require_relative "command/teardown"
+require_relative "command/add"
 
 module MailTools
   module Command
@@ -21,7 +22,7 @@ module MailTools
 
       def init
         db = MailTools::DB.connection
-        { list: List.new(db), setup: Setup.new(db), teardown: Teardown.new(db) }
+        { list: List.new(db), setup: Setup.new(db), teardown: Teardown.new(db), add: Add.new(db) }
       end
     end
   end

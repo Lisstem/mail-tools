@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "io/console"
 require "active_support/core_ext/object/blank"
 require "active_support/core_ext/object/deep_dup"
 require "active_support/inflector/methods"
@@ -53,7 +54,8 @@ module MailTools
       def prompt_for_missing(missing)
         missing_paths(*missing).each do |p|
           print "#{p.respond_to?(:join) ? p.join(" ") : p}: "
-          deep_insert(@store, gets.strip, *p)
+          value = (p.respond_to?(:include?) && p.include?("password")) || p == "password" ? $stdin.getpass : $stdin.gets
+          deep_insert(@store, value.strip, *p)
         end
         self
       end
