@@ -120,6 +120,23 @@ module MailTools
         expected = ["test_bar", ["test_foo", "bar"], ["test_foo", "foo"]]
         assert_equal expected, config.missing_paths(:test_bar, test_foo: [:bar, :foo])
       end
+
+      test "merge adds options to config" do
+        config = Config.new
+        test2 = { test: { test: 2 } }
+        config.merge({ test: "foo", test2: })
+        assert_equal "foo", config["test"]
+        assert_equal object_apply(test2, :to_s), config["test2"]
+      end
+
+      test "merge overrides existing option" do
+        config = Config.new(default: @default)
+        key = @default.keys.first
+        value = "#{@default[key]}_new"
+        config.merge({ key => value })
+        refute_equal object_apply(@default[key], :to_s), config[key.to_s]
+        assert_equal value, config[key.to_s]
+      end
     end
   end
 end

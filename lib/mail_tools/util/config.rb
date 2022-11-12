@@ -2,7 +2,8 @@
 
 require "yaml"
 require "io/console"
-require "active_support/core_ext/object/blank"
+require "active_support
+        puts({ target:, other:}.inspect)/core_ext/object/blank"
 require "active_support/core_ext/object/deep_dup"
 require "active_support/inflector/methods"
 
@@ -40,7 +41,7 @@ module MailTools
       end
       
       def merge(more_options)
-        _merge(@store, more_options)
+        _merge(@store, object_apply(more_options, :to_s))
       end
 
       def inspect
@@ -138,7 +139,7 @@ module MailTools
         raise Error unless other.respond_to? :each_pair
 
         other.each_pair do |k, v|
-          v.respond_to?(:each_pair) ? _merge(target[k], v) : target[k] = v
+          v.respond_to?(:each_pair) ? _merge(target[k] ||= {}, v) : target[k] = v
         end
         target
       end
