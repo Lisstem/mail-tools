@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "mail_tools/util"
-
 require "tempfile"
 
 require_relative "../../mail_tools_test"
@@ -121,6 +119,11 @@ module MailTools
         assert_equal expected, config.missing_paths(:test_bar, test_foo: [:bar, :foo])
       end
 
+      test "missing paths test 2" do
+        config = Config.new
+        assert_equal ["bar", ["foo", "bar"]], config.missing_paths(:bar, foo: :bar)
+      end
+
       test "merge adds options to config" do
         config = Config.new
         test2 = { test: { test: 2 } }
@@ -136,6 +139,29 @@ module MailTools
         config.merge({ key => value })
         refute_equal object_apply(@default[key], :to_s), config[key.to_s]
         assert_equal value, config[key.to_s]
+      end
+
+      test "prompt for missing prompts for each missing path" do
+        paths = [{ foo: :bar }, :bar]
+        input = mock
+        input.expects(:gets).twice.returns(*paths.map(&:to_s))
+        config = Config.new
+        config.expects(:print).twice
+        config.prompt_for_missing(paths, input:)
+        assert_equal "bar", config["bar"]
+        assert_equal "{:foo=>:bar}", config.dig("foo", "bar")
+      end
+
+      test "prompt for missing uses getpass for password" do
+        paths = [:password, { test: :password, foo: { bar: :password } }]
+        input = mock
+        input.expects(:getpass).times(3).returns(*(0..2).to_a.map(&:to_s))
+        config = Config.new
+        config.expects(:print).times(3)
+        config.prompt_for_missing(paths, input:)
+        assert_equal "0", config["password"]
+        assert_equal "1", config.dig("test", "password")
+        assert_equal "2", config.dig("foo", "bar", "password")
       end
     end
   end
