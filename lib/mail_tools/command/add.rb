@@ -7,12 +7,16 @@ module MailTools
   module Command
     class Add < Base
       def domains(*names)
+        raise Error, "No domain names given." if names.blank?
+
         query = "INSERT INTO domains (name) VALUES #{(1..names.length).map { |i| "($#{i})" }.join(", ")};"
         result = db.exec_params(query, names)
         result.check
       end
 
       def addresses(*addresses)
+        raise Error, "No addresses given." if addresses.blank?
+
         create_addresses(addresses)
       end
       
