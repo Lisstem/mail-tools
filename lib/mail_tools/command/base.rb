@@ -11,7 +11,9 @@ module MailTools
   
       protected
   
-      attr_reader :db
+      def db
+        @db.connection
+      end
 
       def display_result(result)
         result.check

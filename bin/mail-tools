@@ -6,10 +6,9 @@ begin
   require "bundler/setup"
   require "mail_tools"
 
-  db = MailTools::DB
   puts(MailTools::Config.config.reject { | k, _ | k == "password" })
-  MailTools::DB.init_with_config
-  MailTools::Command.execute(ARGV)
+  db = MailTools::DB.from_config
+  MailTools::Command.execute(db, ARGV)
 
 ensure
   db&.close

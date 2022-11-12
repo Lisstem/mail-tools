@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "active_support/inflector/methods"
+
 require_relative "command/list"
 require_relative "command/setup"
 require_relative "command/teardown"
@@ -9,26 +11,19 @@ require_relative "command/password"
 module MailTools
   module Command
     class << self
-      def commands
-        @commands ||= init
-      end
+      COMMANDS = %w[List Setup Teardown Add Password].freeze
 
-      def execute(args)
-        name = args.shift
+      def execute(db, args)
+        name = ActiveSupport::Inflector.camelize(args.shift)
+        raise Error, "Unknown command #{args}." unless COMMANDS.include? name
+
+        command = const_get(name)&.new(db)
         sub_command = args.shift || :default
-        if commands[name.to_sym].respond_to? sub_command
-          commands[name.to_sym].public_send(sub_command, *args)
+        if command.respond_to? sub_command
+          command.public_send(sub_command, *args)
         else
-          commands[name.to_sym].public_send(:default, sub_command, *args)
+          command.public_send(:default, sub_command, *args)
         end
-      end
-
-      private
-
-      def init
-        db = MailTools::DB.connection
-        { list: List.new(db), setup: Setup.new(db), teardown: Teardown.new(db), add: Add.new(db),
-          password: Password.new(db) }
       end
     end
   end
