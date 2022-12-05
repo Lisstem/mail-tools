@@ -30,4 +30,10 @@ module MailTools
       refute_nil ::MailTools::VERSION
     end
   end
+
+  class MailToolsMockTest < MailToolsTest
+    def self.test_order
+      :random
+    end
+  end
 end

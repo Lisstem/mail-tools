@@ -6,7 +6,7 @@ require_relative "../../mail_tools_test"
 
 module MailTools
   module Util
-    class ConfigTest < MailToolsTest
+    module ConfigTest
       include Methods
 
       def setup
@@ -28,6 +28,10 @@ module MailTools
           file.close
         end
       end
+    end
+
+    class ConfigParallelTest < MailToolsTest
+      include ConfigTest
 
       test "config has default values" do
         config = Config.new(default: @default)
@@ -143,31 +147,6 @@ module MailTools
         assert_equal value, config[key.to_s]
       end
 
-      test "prompt for missing prompts for each missing path" do
-        paths = [{ foo: :bar }, :bar]
-        input = mock
-        input.expects(:gets).twice.returns(*paths.map(&:to_s))
-        output = mock
-        output.expects(:print).at_least_once
-        config = Config.new
-        config.prompt_for_missing(paths, input:, output:)
-        assert_equal "bar", config["bar"]
-        assert_equal "{:foo=>:bar}", config.dig("foo", "bar")
-      end
-
-      test "prompt for missing uses getpass for password" do
-        paths = [:password, { test: :password, foo: { bar: :password } }]
-        input = mock
-        input.expects(:getpass).times(3).returns(*(0..2).to_a.map(&:to_s))
-        output = mock
-        output.expects(:print).at_least_once
-        config = Config.new
-        config.prompt_for_missing(paths, input:, output:)
-        assert_equal "0", config["password"]
-        assert_equal "1", config.dig("test", "password")
-        assert_equal "2", config.dig("foo", "bar", "password")
-      end
-
       test "create creates empty config" do
         config = Config.create("foo")
         assert_equal 0, config.count
@@ -179,13 +158,42 @@ module MailTools
           Config.create("foo", required:)
         end
       end
+    end
+
+    class ConfigMockTest < MailToolsMockTest
+      include ConfigTest
+
+      test "prompt for missing prompts for each missing path" do
+        paths = [{ foo: :bar }, :bar]
+        input = mock
+        input.expects(:gets).twice.returns(*paths.map(&:to_s))
+        output = mock
+        output.stubs(:print)
+        config = Config.new
+        config.prompt_for_missing(paths, input:, output:)
+        assert_equal "bar", config["bar"]
+        assert_equal "{:foo=>:bar}", config.dig("foo", "bar")
+      end
+
+      test "prompt for missing uses getpass for password" do
+        paths = [:password, { test: :password, foo: { bar: :password } }]
+        input = mock
+        input.expects(:getpass).times(3).returns(*(0..2).to_a.map(&:to_s))
+        output = mock
+        output.stubs(:print)
+        config = Config.new
+        config.prompt_for_missing(paths, input:, output:)
+        assert_equal "0", config["password"]
+        assert_equal "1", config.dig("test", "password")
+        assert_equal "2", config.dig("foo", "bar", "password")
+      end
 
       test "create prompts for missing options" do
         required = [:bar, { foo: :bar }]
         input = mock
         input.expects(:gets).twice.returns(*required.map(&:to_s))
         output = mock
-        output.expects(:print).at_least_once
+        output.stubs(:print)
         config = Config.create("Foo", prompt: true, input:, output:, required:)
         assert_equal "bar", config["bar"]
         assert_equal "{:foo=>:bar}", config.dig("foo", "bar")
