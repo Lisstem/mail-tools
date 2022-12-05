@@ -10,6 +10,8 @@ module MailTools
       include Methods
 
       def setup
+        super
+
         @default = { "foo" => "bar", "bar" => { "foo" => "foo" } }
         @override = { "foo" => "foo" }
         @env = object_apply({ foo: :foo, bar: :bar, test_foo: :test_foo, test_bar: :test_bar }, :to_s, values: true)
@@ -145,9 +147,10 @@ module MailTools
         paths = [{ foo: :bar }, :bar]
         input = mock
         input.expects(:gets).twice.returns(*paths.map(&:to_s))
+        output = mock
+        output.expects(:print).at_least_once
         config = Config.new
-        config.expects(:print).twice
-        config.prompt_for_missing(paths, input:)
+        config.prompt_for_missing(paths, input:, output:)
         assert_equal "bar", config["bar"]
         assert_equal "{:foo=>:bar}", config.dig("foo", "bar")
       end
@@ -156,12 +159,36 @@ module MailTools
         paths = [:password, { test: :password, foo: { bar: :password } }]
         input = mock
         input.expects(:getpass).times(3).returns(*(0..2).to_a.map(&:to_s))
+        output = mock
+        output.expects(:print).at_least_once
         config = Config.new
-        config.expects(:print).times(3)
-        config.prompt_for_missing(paths, input:)
+        config.prompt_for_missing(paths, input:, output:)
         assert_equal "0", config["password"]
         assert_equal "1", config.dig("test", "password")
         assert_equal "2", config.dig("foo", "bar", "password")
+      end
+
+      test "create creates empty config" do
+        config = Config.create("foo")
+        assert_equal 0, config.count
+      end
+
+      test "create raises error if options is missing" do
+        required = [:bar, { foo: :bar }]
+        assert_raises(MailTools::Error) do
+          Config.create("foo", required:)
+        end
+      end
+
+      test "create prompts for missing options" do
+        required = [:bar, { foo: :bar }]
+        input = mock
+        input.expects(:gets).twice.returns(*required.map(&:to_s))
+        output = mock
+        output.expects(:print).at_least_once
+        config = Config.create("Foo", prompt: true, input:, output:, required:)
+        assert_equal "bar", config["bar"]
+        assert_equal "{:foo=>:bar}", config.dig("foo", "bar")
       end
     end
   end

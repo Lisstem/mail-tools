@@ -47,15 +47,15 @@ module MailTools
         @store.to_s
       end
 
-      def prompt_for_missing(*missing, input: $stdin)
-        _prompt_for_missing(missing_paths(*missing), input)
+      def prompt_for_missing(*missing, input: $stdin, output: $stdout)
+        _prompt_for_missing(missing_paths(*missing), input, output)
       end
 
       def self.create(name, **options)
-        options = { prompt: false, required: nil, input: $stdin, files: default_files(name),
+        options = { prompt: false, required: nil, input: $stdin, output: $stdout, files: default_files(name),
                     env_prefix: name.upcase }.merge(options)
         config = new(**options.slice(:default, :env_prefix, :env_map, :env, :files))
-        check_required(config, **options)
+        check_required(config, **options.slice(:prompt, :required, :input, :output))
       end
 
       def self.default_files(name)
@@ -65,22 +65,22 @@ module MailTools
 
       private
 
-      def self.check_required(config, required: nil, prompt: false, input: $stdin)
+      def self.check_required(config, required: nil, prompt: false, input: $stdin, output: $stdout)
         return config unless required
 
         required_array = required.reject { |r| r.respond_to? :merge }
-        required_hash = required.select { |r| r.respond_to? :merge }.reduce(&:merge)
-        missing = config.missing(*required_array, **required_hash)
+        required_hash = required.select { |r| r.respond_to? :merge }.reduce(&:merge) || {}
+        missing = config.missing_paths(*required_array, **required_hash)
         return config if missing.blank?
 
         raise Error, "Missing config variables: #{missing.inspect}" unless prompt
 
-        config._prompt_for_missing(missing, input)
+        config.send(:_prompt_for_missing, missing, input, output)
       end
 
-      def _prompt_for_missing(missing, input = $stdin)
+      def _prompt_for_missing(missing, input, output)
         missing.each do |p|
-          print "#{p.respond_to?(:join) ? p.join(" ") : p}: "
+          output.print "#{p.respond_to?(:join) ? p.join(" ") : p}: "
           value = (p.respond_to?(:include?) && p.include?("password")) || p == "password" ? input.getpass : input.gets
           deep_insert(@store, value.strip, *p)
         end
